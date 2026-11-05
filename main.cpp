@@ -462,4 +462,70 @@ void laporanStatistik() {
 }
 
 // Fungsi utama program
+int main() {
+    // Inisialisasi dukungan encoding UTF-8 dan pemrosesan escape code terminal Windows
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dwMode = 0;
+    GetConsoleMode(hOut, &dwMode);
+    SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
+    muatData();
+
+    const string MENU_UTAMA[] = {
+        "Catat Transaksi Baru",
+        "Lihat Semua Riwayat Transaksi",
+        "Cari Transaksi (Sequential Search)",
+        "Urutkan Nominal (Bubble Sort)",
+        "Laporan Statistik",
+        "Atur Target Budget Bulanan",
+        "Ekspor Laporan ke File Teks",
+        "Reset Semua Data Keuangan",
+        "Keluar dari Program"
+    };
+
+    while (true) {
+        long long totalKeluar = hitungTotalPengeluaran();
+
+        string spasi = marginSpasi();
+        string garisTebal = spasi + CYAN + string(60, '=') + RESET + "\n";
+        string garisTipis = spasi + CYAN + string(60, '-') + RESET + "\n";
+
+        string header = 
+            garisTebal +
+            spasi + BOLD + WHITE + "                 FINTRACK - SISTEM KEUANGAN                 \n" + RESET +
+            garisTebal +
+            spasi + " Saldo Terkini : " + CYAN + BOLD + formatRupiah(saldo) + RESET + "\n" +
+            spasi + " Pengeluaran   : " + RED + formatRupiah(totalKeluar) + RESET + 
+            " / " + YELLOW + formatRupiah(targetBulanan) + RESET + "\n" +
+            spasi + " File Data     : " + GREEN + "data_keuangan.txt (Tersimpan)" + RESET + "\n" +
+            garisTipis;
+
+        int pilihan = pilihMenu(header, MENU_UTAMA, 9);
+
+        if (pilihan == 0) catatTransaksi();
+        else if (pilihan == 1) {
+            system("cls");
+            cout << "\n" << marginSpasi() << CYAN << BOLD << "SEMUA RIWAYAT TRANSAKSI" << RESET;
+            tampilkanTabel(daftarTransaksi, jumlahTransaksi);
+            cout << "\n" << marginSpasi() << "Tekan sembarang tombol untuk kembali...";
+            _getch();
+        }
+        else if (pilihan == 2) cariTransaksi();
+        else if (pilihan == 3) urutkanNominal();
+        else if (pilihan == 4) laporanStatistik();
+        else if (pilihan == 5) aturTargetBudget();
+        else if (pilihan == 6) eksporLaporanTeks();
+        else if (pilihan == 7) resetData();
+        else if (pilihan == 8) {
+            system("cls");
+            simpanData();
+            cout << "\n" << marginSpasi() << GREEN << BOLD << "[Info] Data tersimpan. Sesi selesai.\n" << RESET;
+            break;
+        }
+    }
+
+    return 0;
+}
