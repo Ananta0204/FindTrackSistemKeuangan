@@ -362,3 +362,104 @@ void aturTargetBudget() {
     cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
     _getch();
 }
+// Mengekspor data ke berkas teks dan membukanya langsung via Notepad
+void eksporLaporanTeks() {
+    system("cls");
+    string spasi = marginSpasi();
+    ofstream file("laporan_keuangan.txt");
+
+    if (!file.is_open()) {
+        cout << RED << "\n" << spasi << "[Error] Tidak dapat membuat file laporan_keuangan.txt.\n" << RESET;
+        _getch();
+        return;
+    }
+
+    file << "                     LAPORAN KEUANGAN PRIBADI (FINTRACK)                   \n";
+    file << " Saldo Terkini  : " << formatRupiah(saldo) << "\n";
+    file << " Total Keluar   : " << formatRupiah(hitungTotalPengeluaran()) << "\n";
+    file << " Target Budget  : " << formatRupiah(targetBulanan) << "\n";
+    file << "---------------------------------------------------------------------------\n";
+    file << left << setw(4) << "No" << setw(13) << "Tanggal" << setw(14) << "Jenis" 
+         << setw(15) << "Kategori" << setw(16) << "Nominal" << "Keterangan\n";
+    file << "---------------------------------------------------------------------------\n";
+
+    for (int i = 0; i < jumlahTransaksi; i++) {
+        file << left << setw(4) << (i + 1)
+             << setw(13) << daftarTransaksi[i].tanggal
+             << setw(14) << daftarTransaksi[i].jenis
+             << setw(15) << daftarTransaksi[i].kategori
+             << setw(16) << formatRupiah(daftarTransaksi[i].nominal)
+             << daftarTransaksi[i].keterangan << "\n";
+    }
+    file.close();
+
+    cout << "\n" << spasi << GREEN << BOLD << "[OK] Data berhasil diekspor ke laporan_keuangan.txt.\n" << RESET;
+    cout << spasi << "Membuka berkas laporan...\n";
+    system("notepad laporan_keuangan.txt");
+
+    cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
+    _getch();
+}
+
+// Menghapus seluruh transaksi dan mereset saldo ke nol
+void resetData() {
+    system("cls");
+    string spasi = marginSpasi();
+    cout << "\n" << spasi << RED << BOLD << "KONFIRMASI RESET DATA" << RESET << "\n\n";
+    cout << spasi << "Peringatan:\n";
+    cout << spasi << "1. Seluruh rekaman transaksi akan dihapus permanen.\n";
+    cout << spasi << "2. Saldo sistem akan dikembalikan ke Rp 0.\n";
+    cout << spasi << "3. Target anggaran bulanan diatur ulang ke Rp 1.500.000.\n\n";
+    cout << spasi << YELLOW << "Ketik 'RESET' untuk melanjutkan: " << RESET;
+    
+    string konfirmasi;
+    cin >> konfirmasi;
+
+    if (konfirmasi == "RESET") {
+        jumlahTransaksi = 0;
+        saldo = 0;
+        targetBulanan = 1500000;
+        simpanData();
+        cout << GREEN << BOLD << "\n" << spasi << "[OK] Seluruh data telah diatur ulang ke kondisi awal.\n" << RESET;
+    } else {
+        cout << "\n" << spasi << "[Info] Tindakan dibatalkan. Data tidak diubah.\n";
+    }
+
+    cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali ke menu...";
+    _getch();
+}
+
+// Menghitung dan menyajikan ringkasan statistik keuangan
+void laporanStatistik() {
+    system("cls");
+    string spasi = marginSpasi();
+    long long totalKeluar = hitungTotalPengeluaran();
+    long long keluarTerbesar = 0;
+    int jmlKeluar = 0;
+
+    for (int i = 0; i < jumlahTransaksi; i++) {
+        if (daftarTransaksi[i].jenis == "Pengeluaran") {
+            jmlKeluar++;
+            if (daftarTransaksi[i].nominal > keluarTerbesar) keluarTerbesar = daftarTransaksi[i].nominal;
+        }
+    }
+
+    long long rataRata = (jmlKeluar > 0) ? (totalKeluar / jmlKeluar) : 0;
+
+    cout << "\n" << spasi << CYAN << string(58, '=') << "\n";
+    cout << spasi << BOLD << "               RINGKASAN STATISTIK KEUANGAN               \n" << RESET;
+    cout << spasi << CYAN << string(58, '=') << RESET << "\n";
+    cout << spasi << " Saldo Saat Ini        : " << CYAN << formatRupiah(saldo) << RESET << "\n";
+    cout << spasi << " Total Pengeluaran     : " << RED << formatRupiah(totalKeluar) << RESET << "\n";
+    cout << spasi << " Target Anggaran       : " << YELLOW << formatRupiah(targetBulanan) << RESET << "\n";
+    cout << spasi << " Frekuensi Pengeluaran : " << jmlKeluar << " kali\n";
+    cout << spasi << " Rata-rata Pengeluaran : " << formatRupiah(rataRata) << "\n";
+    cout << spasi << " Pengeluaran Terbesar  : " << formatRupiah(keluarTerbesar) << "\n";
+    cout << spasi << CYAN << string(58, '=') << RESET << "\n";
+
+    cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
+    _getch();
+}
+
+// Fungsi utama program
+
