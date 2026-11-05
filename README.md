@@ -22,87 +22,66 @@ Program **FinTrack** hadir sebagai alat bantu pencatatan keuangan mandiri yang:
 
 Berikut adalah diagram alir yang menggambarkan logika kerja program dari proses inisialisasi berkas hingga keluar:
 
-```mermaid
-flowchart TD
-    Start([Mulai]) --> LoadFile[Muat data dari 'data_keuangan.txt']
-    LoadFile --> Dashboard[/Tampilkan Dashboard & Menu Utama/]
-    Dashboard --> PilihMenu[/Pengguna Memilih Menu/]
+<p align="center">
+  <img src="flowchart.png" alt="Diagram Alir FinTrack" width="100%">
+</p>
 
-    %% Cabang Pilihan
-    PilihMenu --> Menu1[1. Catat Transaksi]
-    PilihMenu --> Menu2[2. Lihat Riwayat]
-    PilihMenu --> Menu3[3. Cari Transaksi]
-    PilihMenu --> Menu4[4. Urutkan Nominal]
-    PilihMenu --> Menu5[5. Laporan Statistik]
-    PilihMenu --> Menu6[6. Atur Budget]
-    PilihMenu --> Menu7[7. Ekspor File Teks]
-    PilihMenu --> Menu8[8. Reset Data]
-    PilihMenu --> Menu9[9. Keluar]
+### Penjelasan Alur Flowchart:
+1. **Inisialisasi:** Program dimulai (`Mulai`) dengan membaca berkas `data_keuangan.txt` untuk memuat data saldo dan transaksi lama, kemudian menampilkan layar `Dashboard`.
+2. **Pilihan Menu:** Pengguna memilih salah satu dari 9 menu yang tersedia:
+   - **Catat Transaksi:** Menginput data transaksi. Jika jenisnya *Pemasukan*, saldo bertambah dan disimpan. Jika *Pengeluaran*, sistem memvalidasi `Saldo >= Nominal?`. Bila saldo cukup, saldo dikurangi dan disimpan; bila tidak, muncul pesan saldo tidak cukup.
+   - **Lihat Riwayat:** Menampilkan seluruh daftar riwayat transaksi dalam bentuk tabel.
+   - **Cari Transaksi:** Menerima input kata kunci, lalu menjalankan algoritma *Sequential Search* untuk menyaring baris data yang cocok.
+   - **Urutkan Nominal:** Mengurutkan transaksi dari nominal terbesar ke terkecil menggunakan algoritma *Bubble Sort*.
+   - **Laporan Statistik:** Menghitung total pengeluaran, rata-rata, dan pengeluaran terbesar, lalu menampilkan ringkasannya.
+   - **Atur Budget:** Memperbarui nilai target anggaran bulanan baru dan menyimpannya ke berkas.
+   - **Expor Laporan:** Menulis seluruh data ke berkas `laporan_keuangan.txt` dan membukanya otomatis di Notepad.
+   - **Reset Data:** Meminta konfirmasi kata kunci `"RESET"`. Jika cocok, seluruh transaksi dihapus dan saldo kembali ke Rp 0. Jika batal, data tidak diubah.
+   - **Keluar:** Menyimpan data akhir ke berkas penyimpanan, lalu program selesai (`Selesai`).
+3. **Looping:** Seluruh cabang menu (menu 1–8) setelah selesai dieksekusi akan bermuara kembali ke `Dashboard` bawah dan memutar kembali ke menu utama.
 
-    %% 1. Catat Transaksi
-    Menu1 --> InputTrx[/Input: Jenis, Kategori, Nominal, Keterangan/]
-    InputTrx --> CekJenis{Apakah Jenis == 'Pengeluaran'?}
-    CekJenis -- Tidak (Pemasukan) --> UpdateMasuk[saldo = saldo + nominal\nSimpan ke Array & File]
-    CekJenis -- Ya --> CekSaldo{Apakah saldo >= nominal?}
-    CekSaldo -- Tidak --> ErrSaldo[/Tampilkan: Saldo Tidak Cukup/]
-    CekSaldo -- Ya --> UpdateKeluar[saldo = saldo - nominal\nSimpan ke Array & File]
-    UpdateMasuk --> SuksesTrx[/Tampilkan: Transaksi Berhasil Disimpan/]
-    UpdateKeluar --> SuksesTrx
-    ErrSaldo --> Dashboard
-    SuksesTrx --> Dashboard
+---
 
-    %% 2. Lihat Riwayat
-    Menu2 --> TampilTabel[/Cetak Tabel Riwayat Transaksi/]
-    TampilTabel --> Dashboard
+## 🛠️ Fitur-Fitur Aplikasi
 
-    %% 3. Cari Transaksi (Sequential Search)
-    Menu3 --> InputCari[/Input: Kata Kunci Pencarian/]
-    InputCari --> SeqSearch[Proses Sequential Search per Baris]
-    SeqSearch --> TampilHasilCari[/Tampilkan Hasil yang Cocok/]
-    TampilHasilCari --> Dashboard
+1. **Navigasi Panah Keyboard (TUI):** Pemilihan menu menggunakan tombol panah (**⬆️ Atas / ⬇️ Bawah**) dan **Enter** tanpa mengetik angka secara manual.
+2. **Pencatatan Pemasukan & Pengeluaran:** Mendukung 9 pilihan kategori, format tanggal otomatis dari sistem, dan validasi kecukupan saldo.
+3. **Format Angka Rupiah:** Menampilkan nominal dengan pemisah ribuan otomatis (misal `Rp 500.000`) dan menerima input angka fleksibel (bisa diketik `500.000` maupun `500000`).
+4. **Pencarian Data (Sequential Search):** Mencari transaksi berdasarkan kata kunci pada keterangan atau kategori secara linier baris demi baris.
+5. **Pengurutan Data (Bubble Sort):** Mengurutkan riwayat transaksi dari nominal terbesar ke terkecil tanpa merusak urutan tanggal data asli.
+6. **Laporan Statistik:** Menyajikan ringkasan frekuensi pengeluaran, rata-rata pengeluaran, dan nominal transaksi terbesar.
+7. **Pengaturan Target Anggaran:** Pengguna dapat mengubah batas maksimal anggaran bulanan kapan saja.
+8. **Ekspor & Pembacaan Notepad:** Mencetak laporan terformat ke berkas `laporan_keuangan.txt` dan langsung membukanya secara otomatis di Notepad.
+9. **Reset Sistem:** Mengosongkan data riwayat transaksi dan mengembalikan saldo ke Rp 0 dengan proteksi konfirmasi ketik `RESET`.
 
-    %% 4. Urutkan Nominal (Bubble Sort)
-    Menu4 --> BubbleSort[Proses Bubble Sort Nominal Terbesar]
-    BubbleSort --> TampilHasilSort[/Tampilkan Tabel Terurut/]
-    TampilHasilSort --> Dashboard
+---
 
-    %% 5. Laporan Statistik
-    Menu5 --> HitungStat[Hitung Total, Rata-rata & Terbesar]
-    HitungStat --> TampilStat[/Tampilkan Ringkasan Statistik/]
-    TampilStat --> Dashboard
+## 📚 Penerapan Konsep Pemrograman
 
-    %% 6. Atur Budget
-    Menu6 --> InputBudget[/Input Target Budget Baru/]
-    InputBudget --> UpdateBudget[Simpan Target Baru ke File]
-    UpdateBudget --> Dashboard
+Struktur kode program disusun menggunakan konsep-konsep dasar pemrograman C++:
 
-    %% 7. Ekspor Laporan
-    Menu7 --> TulisFile[Tulis Laporan ke 'laporan_keuangan.txt']
-    TulisFile --> BukaNotepad[Buka File Otomatis di Notepad]
-    BukaNotepad --> Dashboard
+| Konsep / Modul | Implementasi Teknis dalam Kode |
+| :--- | :--- |
+| **Tipe Data & Variabel** | Penggunaan `struct Transaksi`, tipe data `long long` untuk nominal besar, dan array string. |
+| **Percabangan (`if-else`)** | Validasi saldo cukup/tidak saat belanja, batas anggaran, dan verifikasi konfirmasi reset. |
+| **Perulangan (`for` & `while`)** | Perulangan `while(true)` untuk siklus aplikasi, `for` untuk iterasi data array dan parsing file. |
+| **Array Statis** | Penggunaan array statis 1 dimensi (`daftarTransaksi[1000]`) murni tanpa bantuan *STL Vector*. |
+| **Searching & Sorting** | Algoritma **Sequential Search** pada fitur pencarian dan **Bubble Sort** (dengan variabel `temp`) pada fitur pengurutan. |
+| **Fungsi Modular** | Pembagian tugas ke fungsi-fungsi mandiri (`formatRupiah`, `bersihkanNominal`, `simpanData`, dll). |
+| **Operasi Berkas (*File I/O*)** | Pustaka `<fstream>` (`ifstream` untuk memuat data dan `ofstream` untuk menyimpan serta mengekspor laporan). |
 
-    %% 8. Reset Data
-    Menu8 --> InputKonfirm[/Input Konfirmasi 'RESET'/]
-    InputKonfirm --> CekReset{Input == 'RESET'?}
-    CekReset -- Ya --> HapusData[Kosongkan Data & saldo = 0\nSimpan ke File]
-    CekReset -- Tidak --> BatalReset[/Reset Dibatalkan/]
-    HapusData --> Dashboard
-    BatalReset --> Dashboard
+---
 
-    %% 9. Keluar
-    Menu9 --> SaveAkhir[Simpan Data Akhir ke File]
-    SaveAkhir --> End([Selesai])
-```
+## 🚀 Panduan Menjalankan Program
 
-##🛠️ Fitur-Fitur Aplikasi
+### Prasyarat
+- Kompiler C++ yang mendukung C++11 ke atas (seperti **MinGW / GCC**).
+- Sistem Operasi **Windows 10 / 11** (untuk pustaka `<conio.h>` dan escape code warna ANSI).
 
-1. Navigasi Panah Keyboard (TUI): Pemilihan menu menggunakan tombol panah (⬆️ Atas / ⬇️ Bawah) dan Enter tanpa mengetik angka pilihan menu secara manual.
-2. Pencatatan Pemasukan & Pengeluaran: Mendukung 9 pilihan kategori belanja, format tanggal otomatis dari sistem, dan validasi saldo cukup/tidak.
-3. Format Angka Rupiah: Menampilkan nominal dengan pemisah ribuan otomatis (misal Rp 500.000) dan menerima input fleksibel (dapat diketik 500.000 maupun 500000).
-4. Pencarian Data (Sequential Search): Mencari transaksi berdasarkan kata kunci pada keterangan atau kategori secara linier.
-5. Pengurutan Data (Bubble Sort): Mengurutkan riwayat transaksi dari nominal terbesar ke terkecil tanpa mengubah urutan tanggal pada data asli.
-6. Laporan Statistik: Menyajikan ringkasan frekuensi transaksi, rata-rata pengeluaran, dan nominal transaksi terbesar.
-7. Pengaturan Target Anggaran: Pengguna dapat memperbarui batas anggaran bulanan kapan saja.
-8. Ekspor & Pembacaan Notepad: Mencetak laporan terformat ke berkas laporan_keuangan.txt dan langsung membukanya secara otomatis di aplikasi Notepad Windows.
-9. Reset Sistem: Mengosongkan data riwayat transaksi dan mengembalikan saldo ke Rp 0 dengan proteksi konfirmasi ketik RESET.
-
+### Langkah Kompilasi
+1. Buka **Command Prompt (CMD)** dan arahkan ke folder tempat file `main.cpp` disimpan.
+2. Jalankan perintah kompilasi:
+   ```cmd
+   g++ main.cpp -o keuangan.exe
+   Eksekusi program:
+   keuangan.exe
