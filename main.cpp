@@ -166,3 +166,106 @@ void simpanData() {
     }
     file.close();
 }
+// Menampilkan data transaksi dalam bentuk tabel
+void tampilkanTabel(const Transaksi data[], int totalData) {
+    if (totalData == 0) {
+        cout << YELLOW << "\n" << marginSpasi() << "[Info] Belum ada transaksi yang tercatat.\n" << RESET;
+        return;
+    }
+
+    string spasi = marginSpasi();
+    cout << "\n" << spasi << CYAN << string(75, '=') << RESET << "\n";
+    cout << spasi << BOLD << left << setw(4)  << "No"
+         << setw(13) << "Tanggal"
+         << setw(14) << "Jenis"
+         << setw(15) << "Kategori"
+         << setw(16) << "Nominal"
+         << "Keterangan" << RESET << "\n";
+    cout << spasi << string(75, '-') << "\n";
+
+    for (int i = 0; i < totalData; i++) {
+        cout << spasi << left << setw(4) << (i + 1)
+             << setw(13) << data[i].tanggal;
+
+        if (data[i].jenis == "Pemasukan") cout << GREEN << setw(14) << data[i].jenis << RESET;
+        else cout << RED << setw(14) << data[i].jenis << RESET;
+
+        cout << setw(15) << data[i].kategori
+             << setw(16) << formatRupiah(data[i].nominal)
+             << data[i].keterangan << "\n";
+    }
+    cout << spasi << CYAN << string(75, '=') << RESET << "\n";
+}
+
+// Menangani input transaksi baru, validasi nominal, dan update saldo
+void catatTransaksi() {
+    if (jumlahTransaksi >= MAX_DATA) {
+        cout << RED << "\n" << marginSpasi() << "[Error] Kapasitas memori penyimpanan data sudah penuh.\n" << RESET;
+        _getch();
+        return;
+    }
+
+    string opsiJenis[] = {"Pengeluaran", "Pemasukan", "Batal"};
+    int pilJenis = pilihMenu(marginSpasi() + BOLD + "PILIH JENIS TRANSAKSI" + RESET, opsiJenis, 3);
+    if (pilJenis == 2) return;
+    string jenis = opsiJenis[pilJenis];
+
+    string opsiKategori[10];
+    for (int i = 0; i < 9; i++) opsiKategori[i] = KATEGORI[i];
+    opsiKategori[9] = "Batal";
+
+    int pilKat = pilihMenu(marginSpasi() + BOLD + "PILIH KATEGORI TRANSAKSI" + RESET, opsiKategori, 10);
+    if (pilKat == 9) return;
+    string kategori = opsiKategori[pilKat];
+
+    system("cls");
+    string spasi = marginSpasi();
+    cout << "\n" << spasi << CYAN << BOLD << "INPUT DETAIL TRANSAKSI" << RESET << "\n\n";
+    cout << spasi << "Jenis Transaksi  : " << (jenis == "Pemasukan" ? GREEN : RED) << jenis << RESET << "\n";
+    cout << spasi << "Kategori         : " << YELLOW << kategori << RESET << "\n";
+    cout << spasi << string(46, '-') << "\n";
+
+    string inputNominal;
+    cout << spasi << "Nominal (Rp)     : ";
+    cin >> inputNominal;
+    long long nominal = bersihkanNominal(inputNominal);
+
+    if (nominal <= 0) {
+        cout << RED << "\n" << spasi << "[Error] Nominal harus lebih dari 0.\n" << RESET;
+        cout << spasi << "Tekan sembarang tombol untuk kembali...";
+        _getch();
+        return;
+    }
+
+    if (jenis == "Pengeluaran" && nominal > saldo) {
+        cout << RED << "\n" << spasi << "[Gagal] Saldo tidak mencukupi.\n" << RESET;
+        cout << spasi << "Saldo saat ini   : " << CYAN << formatRupiah(saldo) << RESET << "\n";
+        cout << spasi << "Tekan sembarang tombol untuk kembali...";
+        _getch();
+        return;
+    }
+
+    cin.ignore(1000, '\n');
+    string keterangan;
+    cout << spasi << "Keterangan       : ";
+    getline(cin, keterangan);
+
+    // Menyimpan rekaman baru ke array
+    Transaksi baru = {ambilTanggalSekarang(), jenis, kategori, nominal, keterangan};
+    daftarTransaksi[jumlahTransaksi] = baru;
+    jumlahTransaksi++;
+
+    // Penyesuaian saldo sistem
+    if (jenis == "Pemasukan") saldo += nominal;
+    else saldo -= nominal;
+
+    simpanData();
+    cout << GREEN << BOLD << "\n" << spasi << "[OK] Transaksi berhasil disimpan.\n" << RESET;
+
+    if (jenis == "Pengeluaran" && hitungTotalPengeluaran() >= targetBulanan) {
+        cout << RED << BOLD << spasi << "[Peringatan] Total pengeluaran telah melampaui target anggaran bulanan.\n" << RESET;
+    }
+
+    cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali ke menu...";
+    _getch();
+}
