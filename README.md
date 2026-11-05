@@ -22,9 +22,7 @@ Program **FinTrack** hadir sebagai alat bantu pencatatan keuangan mandiri yang:
 
 Berikut adalah diagram alir yang menggambarkan logika kerja program dari proses inisialisasi berkas hingga keluar:
 
-<p align="center">
-  <img src="flowchart.png" alt="Diagram Alir FinTrack" width="100%">
-</p>
+![Diagram Alir FinTrack](./flowchart.png)
 
 ### Penjelasan Alur Flowchart:
 1. **Inisialisasi:** Program dimulai (`Mulai`) dengan membaca berkas `data_keuangan.txt` untuk memuat data saldo dan transaksi lama, kemudian menampilkan layar `Dashboard`.
@@ -83,5 +81,4 @@ Struktur kode program disusun menggunakan konsep-konsep dasar pemrograman C++:
 2. Jalankan perintah kompilasi:
    ```cmd
    g++ main.cpp -o keuangan.exe
-   Eksekusi program:
    keuangan.exe
