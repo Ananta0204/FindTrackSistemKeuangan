@@ -269,3 +269,96 @@ void catatTransaksi() {
     cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali ke menu...";
     _getch();
 }
+// Mencari data transaksi menggunakan algoritma Sequential Search
+void cariTransaksi() {
+    system("cls");
+    string spasi = marginSpasi();
+    if (jumlahTransaksi == 0) {
+        cout << YELLOW << "\n" << spasi << "[Info] Belum ada transaksi untuk dicari.\n" << RESET;
+        cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
+        _getch();
+        return;
+    }
+
+    cout << "\n" << spasi << CYAN << BOLD << "PENCARIAN TRANSAKSI" << RESET << "\n";
+    cout << spasi << "Kata kunci (keterangan/kategori): ";
+    string target;
+    cin >> target;
+
+    Transaksi hasil[MAX_DATA];
+    int jumlahHasil = 0;
+
+    // Linear scanning terhadap array
+    for (int i = 0; i < jumlahTransaksi; i++) {
+        if (daftarTransaksi[i].keterangan.find(target) != string::npos ||
+            daftarTransaksi[i].kategori.find(target) != string::npos) {
+            hasil[jumlahHasil] = daftarTransaksi[i];
+            jumlahHasil++;
+        }
+    }
+
+    cout << "\n" << spasi << "Hasil pencarian \"" << YELLOW << target << RESET << "\":";
+    tampilkanTabel(hasil, jumlahHasil);
+    cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
+    _getch();
+}
+
+// Mengurutkan transaksi berdasarkan nominal terbesar ke terkecil (Bubble Sort)
+void urutkanNominal() {
+    system("cls");
+    string spasi = marginSpasi();
+    if (jumlahTransaksi <= 1) {
+        cout << YELLOW << "\n" << spasi << "[Info] Jumlah data belum mencukupi untuk diurutkan.\n" << RESET;
+        cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
+        _getch();
+        return;
+    }
+
+    // Salin array agar urutan data asli tetap terjaga
+    Transaksi salinan[MAX_DATA];
+    for (int i = 0; i < jumlahTransaksi; i++) {
+        salinan[i] = daftarTransaksi[i];
+    }
+
+    // Algoritma Bubble Sort
+    for (int i = 0; i < jumlahTransaksi - 1; i++) {
+        for (int j = 0; j < jumlahTransaksi - i - 1; j++) {
+            if (salinan[j].nominal < salinan[j + 1].nominal) {
+                Transaksi temp = salinan[j];
+                salinan[j] = salinan[j + 1];
+                salinan[j + 1] = temp;
+            }
+        }
+    }
+
+    cout << "\n" << spasi << CYAN << BOLD << "DAFTAR TRANSAKSI (URUT DARI NOMINAL TERBESAR)" << RESET;
+    tampilkanTabel(salinan, jumlahTransaksi);
+    cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
+    _getch();
+}
+
+// Mengubah batas anggaran pengeluaran bulanan
+void aturTargetBudget() {
+    system("cls");
+    string spasi = marginSpasi();
+    cout << "\n" << spasi << CYAN << BOLD << "PENGATURAN TARGET ANGGARAN BULANAN" << RESET << "\n\n";
+    cout << spasi << "Target saat ini  : " << YELLOW << formatRupiah(targetBulanan) << RESET << "\n";
+    cout << spasi << string(45, '-') << "\n";
+
+    string input;
+    cout << spasi << "Target baru (Rp) : ";
+    cin >> input;
+
+    long long targetBaru = bersihkanNominal(input);
+    if (targetBaru <= 0) {
+        cout << RED << "\n" << spasi << "[Error] Target anggaran harus lebih dari 0.\n" << RESET;
+    } else {
+        targetBulanan = targetBaru;
+        simpanData();
+        cout << GREEN << BOLD << "\n" << spasi << "[OK] Target anggaran berhasil diperbarui ke: " 
+             << formatRupiah(targetBulanan) << "\n" << RESET;
+    }
+
+    cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
+    _getch();
+}
