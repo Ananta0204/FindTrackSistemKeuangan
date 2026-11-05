@@ -8,7 +8,7 @@
 
 using namespace std;
 
-// Definisi kode warna ANSI untuk tampilan konsol
+// Warna teks terminal (ANSI)
 const string RESET   = "\033[0m";
 const string BOLD    = "\033[1m";
 const string RED     = "\033[1;31m";
@@ -17,7 +17,7 @@ const string YELLOW  = "\033[1;33m";
 const string CYAN    = "\033[1;36m";
 const string WHITE   = "\033[1;37m";
 
-// Struktur data untuk menampung satu rekaman transaksi
+// Struktur data satu transaksi
 struct Transaksi {
     string tanggal;
     string jenis;
@@ -26,21 +26,21 @@ struct Transaksi {
     string keterangan;
 };
 
-// Variabel status global
+// Data utama
 long long saldo = 500000;
 long long targetBulanan = 1500000;
 
-// Penyimpanan data menggunakan array statis
+// Array transaksi (maksimal 1000 data)
 const int MAX_DATA = 1000;
 Transaksi daftarTransaksi[MAX_DATA];
-int jumlahTransaksi = 0;
+int jumlahTransaksi = 0; // Penanda berapa data yang sudah terisi di array
 
-// Daftar kategori pengeluaran dan pemasukan
 const string KATEGORI[] = {
     "Makanan", "Transportasi", "Pendidikan", "Tagihan",
     "Hutang", "Liburan", "Kesehatan", "Pakaian", "Lain Lain"
 };
-// Menghitung indentasi kiri agar tata letak konsol berada di posisi tengah
+
+// Hitung spasi kiri biar tampilan otomatis pas di tengah CMD
 int hitungMarginTengah(int lebarKonten = 60) {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
@@ -49,12 +49,11 @@ int hitungMarginTengah(int lebarKonten = 60) {
     return (margin > 0) ? margin : 2;
 }
 
-// Menghasilkan string spasi pembentuk margin tengah
 string marginSpasi() {
     return string(hitungMarginTengah(), ' ');
 }
 
-// Mengonversi bilangan bulat ke format mata uang Rupiah
+// Pasang titik tiap 3 angka dari belakang (contoh: 500000 -> Rp 500.000)
 string formatRupiah(long long nominal) {
     string str = to_string(nominal);
     string hasil = "";
@@ -67,17 +66,17 @@ string formatRupiah(long long nominal) {
     return "Rp " + hasil;
 }
 
-// Menghapus karakter non-angka dari input teks dan mengubahnya ke tipe long long
+// Ambil angka 0-9 saja, buang titik/koma/spasi dari ketikan user
 long long bersihkanNominal(string teks) {
     string angkaBersih = "";
     for (int i = 0; i < teks.length(); i++) {
         if (teks[i] >= '0' && teks[i] <= '9') angkaBersih += teks[i];
     }
     if (angkaBersih.empty()) return 0;
-    return stoll(angkaBersih);
+    return stoll(angkaBersih); // Ubah string angka ke long long
 }
 
-// Mengambil tanggal sistem saat ini dengan format YYYY-MM-DD
+// Ambil tanggal hari ini dari sistem (format YYYY-MM-DD)
 string ambilTanggalSekarang() {
     time_t now = time(0);
     tm *ltm = localtime(&now);
@@ -86,7 +85,7 @@ string ambilTanggalSekarang() {
     return string(buf);
 }
 
-// Menghitung akumulasi nominal pada transaksi bertipe Pengeluaran
+// Hitung total khusus yang jenisnya pengeluaran
 long long hitungTotalPengeluaran() {
     long long total = 0;
     for (int i = 0; i < jumlahTransaksi; i++) {
@@ -95,52 +94,25 @@ long long hitungTotalPengeluaran() {
     return total;
 }
 
-// Menampilkan menu interaktif berbasis tombol panah (Atas/Bawah) dan Enter
-int pilihMenu(string header, const string opsi[], int jumlahOpsi) {
-    int kursor = 0;
-
-    while (true) {
-        system("cls");
-        cout << "\n" << header << "\n\n";
-        cout << marginSpasi() << YELLOW << "Gunakan [Panah Atas / Bawah] lalu tekan [ENTER]:\n\n" << RESET;
-
-        for (int i = 0; i < jumlahOpsi; i++) {
-            if (i == kursor) {
-                cout << marginSpasi() << CYAN << BOLD << "  ➤  [ " << opsi[i] << " ]\n" << RESET;
-            } else {
-                cout << marginSpasi() << "     [ " << opsi[i] << " ]\n";
-            }
-        }
-        cout << "\n" << marginSpasi() << CYAN << string(60, '-') << RESET << "\n";
-
-        int tombol = _getch();
-        if (tombol == 224 || tombol == 0) {
-            tombol = _getch();
-            if (tombol == 72) kursor = (kursor - 1 + jumlahOpsi) % jumlahOpsi;
-            else if (tombol == 80) kursor = (kursor + 1) % jumlahOpsi;
-        } else if (tombol == 13) {
-            return kursor;
-        }
-    }
-}
-
-// Membaca data tersimpan dari file teks ke dalam array
+// Baca file txt pas program pertama kali dibuka
 void muatData() {
     ifstream file("data_keuangan.txt");
     if (!file.is_open()) return;
 
+    // Baris 1 isinya saldo dan target budget
     file >> saldo >> targetBulanan;
-    file.ignore();
+    file.ignore(); // Buang sisa enter (\n)
 
     Transaksi t;
     string nominalStr;
     jumlahTransaksi = 0;
 
+    // Baca per kolom pakai pemisah tanda pipa (|)
     while (getline(file, t.tanggal, '|')) {
         getline(file, t.jenis, '|');
         getline(file, t.kategori, '|');
         getline(file, nominalStr, '|');
-        getline(file, t.keterangan);
+        getline(file, t.keterangan); // Kolom terakhir sampai ujung baris
 
         if (!nominalStr.empty() && jumlahTransaksi < MAX_DATA) {
             t.nominal = stoll(nominalStr);
@@ -151,7 +123,7 @@ void muatData() {
     file.close();
 }
 
-// Menyimpan saldo, target, dan seluruh elemen array ke file teks
+// Simpan ulang semua data ke file txt (format: tgl|jenis|kategori|nominal|ket)
 void simpanData() {
     ofstream file("data_keuangan.txt");
     if (!file.is_open()) return;
@@ -166,7 +138,8 @@ void simpanData() {
     }
     file.close();
 }
-// Menampilkan data transaksi dalam bentuk tabel
+
+// Cetak tabel transaksi
 void tampilkanTabel(const Transaksi data[], int totalData) {
     if (totalData == 0) {
         cout << YELLOW << "\n" << marginSpasi() << "[Info] Belum ada transaksi yang tercatat.\n" << RESET;
@@ -197,19 +170,53 @@ void tampilkanTabel(const Transaksi data[], int totalData) {
     cout << spasi << CYAN << string(75, '=') << RESET << "\n";
 }
 
-// Menangani input transaksi baru, validasi nominal, dan update saldo
+// Menu navigasi panah keyboard
+int pilihMenu(string header, const string opsi[], int jumlahOpsi) {
+    int kursor = 0;
+
+    while (true) {
+        system("cls");
+        cout << "\n" << header << "\n\n";
+        cout << marginSpasi() << YELLOW << "Gunakan [Panah Atas / Bawah] lalu tekan [ENTER]:\n\n" << RESET;
+
+        for (int i = 0; i < jumlahOpsi; i++) {
+            if (i == kursor) {
+                cout << marginSpasi() << CYAN << BOLD << "  ➤  [ " << opsi[i] << " ]\n" << RESET;
+            } else {
+                cout << marginSpasi() << "     [ " << opsi[i] << " ]\n";
+            }
+        }
+        cout << "\n" << marginSpasi() << CYAN << string(60, '-') << RESET << "\n";
+
+        // Di Windows, tombol panah ngirim 2 kode (awalan 224/0 lalu kode arahnya)
+        int tombol = _getch();
+        if (tombol == 224 || tombol == 0) {
+            tombol = _getch();
+            // 72 = panah atas, 80 = panah bawah
+            // Pakai modulo (%) biar kursor muter (dari paling atas bisa lompat ke paling bawah)
+            if (tombol == 72) kursor = (kursor - 1 + jumlahOpsi) % jumlahOpsi;
+            else if (tombol == 80) kursor = (kursor + 1) % jumlahOpsi;
+        } else if (tombol == 13) { // 13 = tombol Enter
+            return kursor;
+        }
+    }
+}
+
+// Menu 1: Input transaksi baru
 void catatTransaksi() {
     if (jumlahTransaksi >= MAX_DATA) {
         cout << RED << "\n" << marginSpasi() << "[Error] Kapasitas memori penyimpanan data sudah penuh.\n" << RESET;
-        _getch();
+        _getch(); // Nahan layar biar error kebaca
         return;
     }
 
+    // Pilih jenis transaksi
     string opsiJenis[] = {"Pengeluaran", "Pemasukan", "Batal"};
     int pilJenis = pilihMenu(marginSpasi() + BOLD + "PILIH JENIS TRANSAKSI" + RESET, opsiJenis, 3);
     if (pilJenis == 2) return;
     string jenis = opsiJenis[pilJenis];
 
+    // Pilih kategori
     string opsiKategori[10];
     for (int i = 0; i < 9; i++) opsiKategori[i] = KATEGORI[i];
     opsiKategori[9] = "Batal";
@@ -237,6 +244,7 @@ void catatTransaksi() {
         return;
     }
 
+    // Cek saldo cukup atau tidak kalau pengeluaran
     if (jenis == "Pengeluaran" && nominal > saldo) {
         cout << RED << "\n" << spasi << "[Gagal] Saldo tidak mencukupi.\n" << RESET;
         cout << spasi << "Saldo saat ini   : " << CYAN << formatRupiah(saldo) << RESET << "\n";
@@ -245,31 +253,43 @@ void catatTransaksi() {
         return;
     }
 
+    // Buang sisa enter (\n) di buffer keyboard biar getline keterangan ga ke-skip
     cin.ignore(1000, '\n');
     string keterangan;
     cout << spasi << "Keterangan       : ";
     getline(cin, keterangan);
 
-    // Menyimpan rekaman baru ke array
+    // Simpan ke array
     Transaksi baru = {ambilTanggalSekarang(), jenis, kategori, nominal, keterangan};
     daftarTransaksi[jumlahTransaksi] = baru;
     jumlahTransaksi++;
 
-    // Penyesuaian saldo sistem
+    // Update nilai saldo
     if (jenis == "Pemasukan") saldo += nominal;
     else saldo -= nominal;
 
-    simpanData();
+    simpanData(); // Auto-save ke txt
     cout << GREEN << BOLD << "\n" << spasi << "[OK] Transaksi berhasil disimpan.\n" << RESET;
 
+    // Cek apakah sudah tembus batas budget
     if (jenis == "Pengeluaran" && hitungTotalPengeluaran() >= targetBulanan) {
         cout << RED << BOLD << spasi << "[Peringatan] Total pengeluaran telah melampaui target anggaran bulanan.\n" << RESET;
     }
 
     cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali ke menu...";
+    _getch(); // Tahan layar sampai user pencet tombol
+}
+
+// Menu 2: Tampilkan semua data di array
+void lihatRiwayatTransaksi() {
+    system("cls");
+    cout << "\n" << marginSpasi() << CYAN << BOLD << "SEMUA RIWAYAT TRANSAKSI" << RESET;
+    tampilkanTabel(daftarTransaksi, jumlahTransaksi);
+    cout << "\n" << marginSpasi() << "Tekan sembarang tombol untuk kembali...";
     _getch();
 }
-// Mencari data transaksi menggunakan algoritma Sequential Search
+
+// Menu 3: Cari data (Sequential Search)
 void cariTransaksi() {
     system("cls");
     string spasi = marginSpasi();
@@ -288,8 +308,9 @@ void cariTransaksi() {
     Transaksi hasil[MAX_DATA];
     int jumlahHasil = 0;
 
-    // Linear scanning terhadap array
+    // Sequential search: cek satu per satu dari indeks 0 sampai akhir
     for (int i = 0; i < jumlahTransaksi; i++) {
+        // .find() mengecek apakah kata kunci ada di dalam keterangan atau kategori
         if (daftarTransaksi[i].keterangan.find(target) != string::npos ||
             daftarTransaksi[i].kategori.find(target) != string::npos) {
             hasil[jumlahHasil] = daftarTransaksi[i];
@@ -303,7 +324,7 @@ void cariTransaksi() {
     _getch();
 }
 
-// Mengurutkan transaksi berdasarkan nominal terbesar ke terkecil (Bubble Sort)
+// Menu 4: Urutkan data nominal terbesar ke terkecil (Bubble Sort)
 void urutkanNominal() {
     system("cls");
     string spasi = marginSpasi();
@@ -314,13 +335,13 @@ void urutkanNominal() {
         return;
     }
 
-    // Salin array agar urutan data asli tetap terjaga
+    // Salin data ke array sementara biar urutan tanggal asli ga berantakan
     Transaksi salinan[MAX_DATA];
     for (int i = 0; i < jumlahTransaksi; i++) {
         salinan[i] = daftarTransaksi[i];
     }
 
-    // Algoritma Bubble Sort
+    // Bubble Sort: bandingkan 2 data bersebelahan, tukar pakai temp jika kiri < kanan
     for (int i = 0; i < jumlahTransaksi - 1; i++) {
         for (int j = 0; j < jumlahTransaksi - i - 1; j++) {
             if (salinan[j].nominal < salinan[j + 1].nominal) {
@@ -337,7 +358,41 @@ void urutkanNominal() {
     _getch();
 }
 
-// Mengubah batas anggaran pengeluaran bulanan
+// Menu 5: Hitung ringkasan statistik
+void laporanStatistik() {
+    system("cls");
+    string spasi = marginSpasi();
+    long long totalKeluar = hitungTotalPengeluaran();
+    long long keluarTerbesar = 0;
+    int jmlKeluar = 0;
+
+    // Cari frekuensi dan pengeluaran terbesar
+    for (int i = 0; i < jumlahTransaksi; i++) {
+        if (daftarTransaksi[i].jenis == "Pengeluaran") {
+            jmlKeluar++;
+            if (daftarTransaksi[i].nominal > keluarTerbesar) keluarTerbesar = daftarTransaksi[i].nominal;
+        }
+    }
+
+    // Cegah crash pembagian dengan 0 jika belum ada pengeluaran
+    long long rataRata = (jmlKeluar > 0) ? (totalKeluar / jmlKeluar) : 0;
+
+    cout << "\n" << spasi << CYAN << string(58, '=') << "\n";
+    cout << spasi << BOLD << "               RINGKASAN STATISTIK KEUANGAN               \n" << RESET;
+    cout << spasi << CYAN << string(58, '=') << RESET << "\n";
+    cout << spasi << " Saldo Saat Ini        : " << CYAN << formatRupiah(saldo) << RESET << "\n";
+    cout << spasi << " Total Pengeluaran     : " << RED << formatRupiah(totalKeluar) << RESET << "\n";
+    cout << spasi << " Target Anggaran       : " << YELLOW << formatRupiah(targetBulanan) << RESET << "\n";
+    cout << spasi << " Frekuensi Pengeluaran : " << jmlKeluar << " kali\n";
+    cout << spasi << " Rata-rata Pengeluaran : " << formatRupiah(rataRata) << "\n";
+    cout << spasi << " Pengeluaran Terbesar  : " << formatRupiah(keluarTerbesar) << "\n";
+    cout << spasi << CYAN << string(58, '=') << RESET << "\n";
+
+    cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
+    _getch();
+}
+
+// Menu 6: Ganti batas budget
 void aturTargetBudget() {
     system("cls");
     string spasi = marginSpasi();
@@ -354,7 +409,7 @@ void aturTargetBudget() {
         cout << RED << "\n" << spasi << "[Error] Target anggaran harus lebih dari 0.\n" << RESET;
     } else {
         targetBulanan = targetBaru;
-        simpanData();
+        simpanData(); // Tulis target baru ke txt
         cout << GREEN << BOLD << "\n" << spasi << "[OK] Target anggaran berhasil diperbarui ke: " 
              << formatRupiah(targetBulanan) << "\n" << RESET;
     }
@@ -362,7 +417,8 @@ void aturTargetBudget() {
     cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
     _getch();
 }
-// Mengekspor data ke berkas teks dan membukanya langsung via Notepad
+
+// Menu 7: Tulis data ke txt laporan lalu otomatis buka Notepad
 void eksporLaporanTeks() {
     system("cls");
     string spasi = marginSpasi();
@@ -374,7 +430,10 @@ void eksporLaporanTeks() {
         return;
     }
 
+    // Tulis header dan tabel ke dalam file
+    file << "===========================================================================\n";
     file << "                     LAPORAN KEUANGAN PRIBADI (FINTRACK)                   \n";
+    file << "===========================================================================\n";
     file << " Saldo Terkini  : " << formatRupiah(saldo) << "\n";
     file << " Total Keluar   : " << formatRupiah(hitungTotalPengeluaran()) << "\n";
     file << " Target Budget  : " << formatRupiah(targetBulanan) << "\n";
@@ -395,13 +454,15 @@ void eksporLaporanTeks() {
 
     cout << "\n" << spasi << GREEN << BOLD << "[OK] Data berhasil diekspor ke laporan_keuangan.txt.\n" << RESET;
     cout << spasi << "Membuka berkas laporan...\n";
+    
+    // Perintah Windows untuk langsung buka file di Notepad
     system("notepad laporan_keuangan.txt");
 
     cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
     _getch();
 }
 
-// Menghapus seluruh transaksi dan mereset saldo ke nol
+// Menu 8: Reset seluruh data
 void resetData() {
     system("cls");
     string spasi = marginSpasi();
@@ -415,11 +476,12 @@ void resetData() {
     string konfirmasi;
     cin >> konfirmasi;
 
+    // Reset array cukup kembalikan jumlahTransaksi ke 0
     if (konfirmasi == "RESET") {
         jumlahTransaksi = 0;
         saldo = 0;
         targetBulanan = 1500000;
-        simpanData();
+        simpanData(); // Timpa file txt dengan kondisi kosong
         cout << GREEN << BOLD << "\n" << spasi << "[OK] Seluruh data telah diatur ulang ke kondisi awal.\n" << RESET;
     } else {
         cout << "\n" << spasi << "[Info] Tindakan dibatalkan. Data tidak diubah.\n";
@@ -429,41 +491,8 @@ void resetData() {
     _getch();
 }
 
-// Menghitung dan menyajikan ringkasan statistik keuangan
-void laporanStatistik() {
-    system("cls");
-    string spasi = marginSpasi();
-    long long totalKeluar = hitungTotalPengeluaran();
-    long long keluarTerbesar = 0;
-    int jmlKeluar = 0;
-
-    for (int i = 0; i < jumlahTransaksi; i++) {
-        if (daftarTransaksi[i].jenis == "Pengeluaran") {
-            jmlKeluar++;
-            if (daftarTransaksi[i].nominal > keluarTerbesar) keluarTerbesar = daftarTransaksi[i].nominal;
-        }
-    }
-
-    long long rataRata = (jmlKeluar > 0) ? (totalKeluar / jmlKeluar) : 0;
-
-    cout << "\n" << spasi << CYAN << string(58, '=') << "\n";
-    cout << spasi << BOLD << "               RINGKASAN STATISTIK KEUANGAN               \n" << RESET;
-    cout << spasi << CYAN << string(58, '=') << RESET << "\n";
-    cout << spasi << " Saldo Saat Ini        : " << CYAN << formatRupiah(saldo) << RESET << "\n";
-    cout << spasi << " Total Pengeluaran     : " << RED << formatRupiah(totalKeluar) << RESET << "\n";
-    cout << spasi << " Target Anggaran       : " << YELLOW << formatRupiah(targetBulanan) << RESET << "\n";
-    cout << spasi << " Frekuensi Pengeluaran : " << jmlKeluar << " kali\n";
-    cout << spasi << " Rata-rata Pengeluaran : " << formatRupiah(rataRata) << "\n";
-    cout << spasi << " Pengeluaran Terbesar  : " << formatRupiah(keluarTerbesar) << "\n";
-    cout << spasi << CYAN << string(58, '=') << RESET << "\n";
-
-    cout << "\n" << spasi << "Tekan sembarang tombol untuk kembali...";
-    _getch();
-}
-
-// Fungsi utama program
 int main() {
-    // Inisialisasi dukungan encoding UTF-8 dan pemrosesan escape code terminal Windows
+    // Aktifkan UTF-8 dan kode warna ANSI di terminal Windows
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
@@ -472,20 +501,22 @@ int main() {
     GetConsoleMode(hOut, &dwMode);
     SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
+    // Ambil data lama dari file
     muatData();
 
     const string MENU_UTAMA[] = {
-        "Catat Transaksi Baru",
-        "Lihat Semua Riwayat Transaksi",
-        "Cari Transaksi (Sequential Search)",
-        "Urutkan Nominal (Bubble Sort)",
-        "Laporan Statistik",
-        "Atur Target Budget Bulanan",
-        "Ekspor Laporan ke File Teks",
-        "Reset Semua Data Keuangan",
-        "Keluar dari Program"
+        "Catat Transaksi Baru",              // 0
+        "Lihat Semua Riwayat Transaksi",     // 1
+        "Cari Transaksi (Sequential Search)",// 2
+        "Urutkan Nominal (Bubble Sort)",     // 3
+        "Laporan Statistik",                 // 4
+        "Atur Target Budget Bulanan",        // 5
+        "Ekspor Laporan ke File Teks",       // 6
+        "Reset Semua Data Keuangan",         // 7
+        "Keluar dari Program"                // 8
     };
 
+    // Loop utama program
     while (true) {
         long long totalKeluar = hitungTotalPengeluaran();
 
@@ -493,6 +524,7 @@ int main() {
         string garisTebal = spasi + CYAN + string(60, '=') + RESET + "\n";
         string garisTipis = spasi + CYAN + string(60, '-') + RESET + "\n";
 
+        // Teks kartu ringkasan dashboard
         string header = 
             garisTebal +
             spasi + BOLD + WHITE + "                 FINTRACK - SISTEM KEUANGAN                 \n" + RESET +
@@ -505,14 +537,9 @@ int main() {
 
         int pilihan = pilihMenu(header, MENU_UTAMA, 9);
 
+        // Eksekusi fungsi sesuai indeks pilihan menu
         if (pilihan == 0) catatTransaksi();
-        else if (pilihan == 1) {
-            system("cls");
-            cout << "\n" << marginSpasi() << CYAN << BOLD << "SEMUA RIWAYAT TRANSAKSI" << RESET;
-            tampilkanTabel(daftarTransaksi, jumlahTransaksi);
-            cout << "\n" << marginSpasi() << "Tekan sembarang tombol untuk kembali...";
-            _getch();
-        }
+        else if (pilihan == 1) lihatRiwayatTransaksi();
         else if (pilihan == 2) cariTransaksi();
         else if (pilihan == 3) urutkanNominal();
         else if (pilihan == 4) laporanStatistik();
@@ -521,7 +548,7 @@ int main() {
         else if (pilihan == 7) resetData();
         else if (pilihan == 8) {
             system("cls");
-            simpanData();
+            simpanData(); // Pastikan data tersimpan sebelum program keluar
             cout << "\n" << marginSpasi() << GREEN << BOLD << "[Info] Data tersimpan. Sesi selesai.\n" << RESET;
             break;
         }
