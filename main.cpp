@@ -40,3 +40,129 @@ const string KATEGORI[] = {
     "Makanan", "Transportasi", "Pendidikan", "Tagihan",
     "Hutang", "Liburan", "Kesehatan", "Pakaian", "Lain Lain"
 };
+// Menghitung indentasi kiri agar tata letak konsol berada di posisi tengah
+int hitungMarginTengah(int lebarKonten = 60) {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    int lebarLayar = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    int margin = (lebarLayar - lebarKonten) / 2;
+    return (margin > 0) ? margin : 2;
+}
+
+// Menghasilkan string spasi pembentuk margin tengah
+string marginSpasi() {
+    return string(hitungMarginTengah(), ' ');
+}
+
+// Mengonversi bilangan bulat ke format mata uang Rupiah
+string formatRupiah(long long nominal) {
+    string str = to_string(nominal);
+    string hasil = "";
+    int hitung = 0;
+    for (int i = str.length() - 1; i >= 0; i--) {
+        hasil = str[i] + hasil;
+        hitung++;
+        if (hitung % 3 == 0 && i != 0) hasil = "." + hasil;
+    }
+    return "Rp " + hasil;
+}
+
+// Menghapus karakter non-angka dari input teks dan mengubahnya ke tipe long long
+long long bersihkanNominal(string teks) {
+    string angkaBersih = "";
+    for (int i = 0; i < teks.length(); i++) {
+        if (teks[i] >= '0' && teks[i] <= '9') angkaBersih += teks[i];
+    }
+    if (angkaBersih.empty()) return 0;
+    return stoll(angkaBersih);
+}
+
+// Mengambil tanggal sistem saat ini dengan format YYYY-MM-DD
+string ambilTanggalSekarang() {
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    char buf[20];
+    strftime(buf, sizeof(buf), "%Y-%m-%d", ltm);
+    return string(buf);
+}
+
+// Menghitung akumulasi nominal pada transaksi bertipe Pengeluaran
+long long hitungTotalPengeluaran() {
+    long long total = 0;
+    for (int i = 0; i < jumlahTransaksi; i++) {
+        if (daftarTransaksi[i].jenis == "Pengeluaran") total += daftarTransaksi[i].nominal;
+    }
+    return total;
+}
+
+// Menampilkan menu interaktif berbasis tombol panah (Atas/Bawah) dan Enter
+int pilihMenu(string header, const string opsi[], int jumlahOpsi) {
+    int kursor = 0;
+
+    while (true) {
+        system("cls");
+        cout << "\n" << header << "\n\n";
+        cout << marginSpasi() << YELLOW << "Gunakan [Panah Atas / Bawah] lalu tekan [ENTER]:\n\n" << RESET;
+
+        for (int i = 0; i < jumlahOpsi; i++) {
+            if (i == kursor) {
+                cout << marginSpasi() << CYAN << BOLD << "  ➤  [ " << opsi[i] << " ]\n" << RESET;
+            } else {
+                cout << marginSpasi() << "     [ " << opsi[i] << " ]\n";
+            }
+        }
+        cout << "\n" << marginSpasi() << CYAN << string(60, '-') << RESET << "\n";
+
+        int tombol = _getch();
+        if (tombol == 224 || tombol == 0) {
+            tombol = _getch();
+            if (tombol == 72) kursor = (kursor - 1 + jumlahOpsi) % jumlahOpsi;
+            else if (tombol == 80) kursor = (kursor + 1) % jumlahOpsi;
+        } else if (tombol == 13) {
+            return kursor;
+        }
+    }
+}
+
+// Membaca data tersimpan dari file teks ke dalam array
+void muatData() {
+    ifstream file("data_keuangan.txt");
+    if (!file.is_open()) return;
+
+    file >> saldo >> targetBulanan;
+    file.ignore();
+
+    Transaksi t;
+    string nominalStr;
+    jumlahTransaksi = 0;
+
+    while (getline(file, t.tanggal, '|')) {
+        getline(file, t.jenis, '|');
+        getline(file, t.kategori, '|');
+        getline(file, nominalStr, '|');
+        getline(file, t.keterangan);
+
+        if (!nominalStr.empty() && jumlahTransaksi < MAX_DATA) {
+            t.nominal = stoll(nominalStr);
+            daftarTransaksi[jumlahTransaksi] = t;
+            jumlahTransaksi++;
+        }
+    }
+    file.close();
+}
+
+// Menyimpan saldo, target, dan seluruh elemen array ke file teks
+void simpanData() {
+    ofstream file("data_keuangan.txt");
+    if (!file.is_open()) return;
+
+    file << saldo << " " << targetBulanan << "\n";
+    for (int i = 0; i < jumlahTransaksi; i++) {
+        file << daftarTransaksi[i].tanggal << "|"
+             << daftarTransaksi[i].jenis << "|"
+             << daftarTransaksi[i].kategori << "|"
+             << daftarTransaksi[i].nominal << "|"
+             << daftarTransaksi[i].keterangan << "\n";
+    }
+    file.close();
+}
