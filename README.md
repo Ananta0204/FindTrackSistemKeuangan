@@ -22,7 +22,7 @@ Program **FinTrack** hadir sebagai alat bantu pencatatan keuangan mandiri yang:
 
 Berikut adalah diagram alir yang menggambarkan logika kerja program dari proses inisialisasi berkas hingga keluar:
 
-![Diagram Alir FinTrack](./flowchart.png)
+<img width="11028" height="5012" alt="flowchart" src="https://github.com/user-attachments/assets/afd3a746-8ce3-4194-9985-d48722836ae9" />
 
 ### Penjelasan Alur Flowchart:
 1. **Inisialisasi:** Program dimulai (`Mulai`) dengan membaca berkas `data_keuangan.txt` untuk memuat data saldo dan transaksi lama, kemudian menampilkan layar `Dashboard`.
