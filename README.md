@@ -82,3 +82,12 @@ Struktur kode program disusun menggunakan konsep-konsep dasar pemrograman C++:
    ```cmd
    g++ main.cpp -o keuangan.exe
    keuangan.exe
+   ```
+## 👥 Anggota Team
+No	Nama Lengkap	             NPM	
+1	Firzy Ananta Naufal         2617051041
+2	Dwantara Effendy            2617051047
+3	Mutiara Asa Putri Wibowo    2617051003
+4	Sekar Tri W.P               2617051012
+5	Rizki Bintang Armando       2617051020
+6	Audina Tifani Situmorang    2617051032
